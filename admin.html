@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" class="light" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Time | Admin Panel</title>
+    <link rel="icon" type="image/png" href="logo.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'], rtl_font: ['Noto Kufi Arabic', 'sans-serif'] },
+                    colors: { brand: { light: '#7C3AED', dark: '#A78BFA' }, bg: { light: '#FAF5FF', dark: '#0f0a1a' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        [dir="rtl"], [dir="rtl"] * { font-family: 'Noto Kufi Arabic', sans-serif !important; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        #main-admin-content { display: none; }
+    </style>
+</head>
+<body class="bg-bg-light text-gray-800 font-sans p-2 md:p-8 transition-all duration-500 overflow-x-hidden">
+
+    <div id="login-overlay" class="fixed inset-0 z-[300] flex items-center justify-center bg-bg-light p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-purple-100 p-6 md:p-10 fade-in">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-black text-gray-800 translate" data-en="Secure Login" data-ar="تسجيل الدخول" data-ckb="چوونەژوورەوە">Secure Login</h2>
+                <p class="text-gray-400 text-sm translate" data-en="Authorized personnel only" data-ar="للمخولين فقط" data-ckb="تەنها بۆ کەسانی ڕێپێدراو">Authorized personnel only</p>
+            </div>
+            <form id="dbLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 translate" data-en="Email Address" data-ar="البريد الإلكتروني" data-ckb="ئیمەیڵ">Email Address</label>
+                    <input type="email" id="email" required class="w-full p-4 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 translate" data-en="Password" data-ar="كلمة المرور" data-ckb="وشەی نهێنی">Password</label>
+                    <input type="password" id="password" required class="w-full p-4 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
+                </div>
+                <button type="submit" id="loginBtn" class="w-full py-4 bg-brand-light text-white font-bold rounded-xl shadow-xl hover:bg-brand-dark transition-all translate" data-en="Sign In" data-ar="تسجيل الدخول" data-ckb="بچۆ ژوورەوە">Sign In</button>
+                <p id="loginError" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-admin-content" class="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-xl border border-purple-100 p-4 md:p-10 mb-10">
+        
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-2xl md:text-3xl font-black text-brand-light translate" data-en="Cafe Time Admin" data-ar="لوحة التحكم" data-ckb="بەڕێوەبردنی کافێ">Cafe Time Admin</h1>
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1 bg-purple-50 p-1 rounded-full border border-purple-100">
+                    <button onclick="setLanguage('en')" id="btn-en" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">EN</button>
+                    <button onclick="setLanguage('ar')" id="btn-ar" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">AR</button>
+                    <button onclick="setLanguage('ckb')" id="btn-ckb" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">KU</button>
+                </div>
+                <button onclick="handleLogout()" class="p-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex border-b border-purple-100 mb-8 overflow-x-auto no-scrollbar gap-4 md:gap-8">
+            <button id="tab-item" onclick="switchTab('item')" class="pb-3 font-bold text-brand-light border-b-2 border-brand-light whitespace-nowrap text-sm translate" data-en="Add/Edit Item" data-ar="إضافة مادة" data-ckb="زیادکردنی کاڵا">Add/Edit Item</button>
+            <button id="tab-category" onclick="switchTab('category')" class="pb-3 font-bold text-gray-400 whitespace-nowrap text-sm translate" data-en="Categories" data-ar="الأقسام" data-ckb="بەشەکان">Categories</button>
+            <button id="tab-manage-items" onclick="switchTab('manage-items')" class="pb-3 font-bold text-gray-400 whitespace-nowrap text-sm translate" data-en="Items List" data-ar="قائمة المواد" data-ckb="لیستی کاڵاکان">Items List</button>
+            <button id="tab-manage-cats" onclick="switchTab('manage-cats')" class="pb-3 font-bold text-gray-400 whitespace-nowrap text-sm translate" data-en="Cats List" data-ar="قائمة الأقسام" data-ckb="لیستی بەشەکان">Cats List</button>
+        </div>
+
+        <div id="item-content" class="fade-in">
+            <h2 id="itemFormTitle" class="text-xl font-bold mb-6 text-gray-700 translate" data-en="Add New Menu Item" data-ar="إضافة مادة جديدة" data-ckb="زیادکردنی کاڵای نوێ">Add New Menu Item</h2>
+            <form id="addItemForm" class="space-y-5">
+                <input type="hidden" id="editItemId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase translate" data-en="Category" data-ar="القسم" data-ckb="بەش">Category</label>
+                        <select id="category" required class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light font-medium"></select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase translate" data-en="Price (IQD)" data-ar="السعر (د.ع)" data-ckb="نرخ (دینار)">Price (IQD)</label>
+                        <input type="number" id="price" required class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light font-medium">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase translate" data-en="Item Image" data-ar="صورة المادة" data-ckb="وێنەی کاڵا">Item Image</label>
+                    <input type="file" id="imageFile" class="w-full p-3 bg-purple-50 rounded-xl border-2 border-dashed border-purple-200 cursor-pointer text-sm">
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <input type="text" id="nameEn" required placeholder="Name (English)" class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light">
+                    <input type="text" id="nameAr" required placeholder="الاسم (عربي)" dir="rtl" class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light">
+                    <input type="text" id="nameCkb" required placeholder="ناو (کوردی)" dir="rtl" class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="submitBtn" class="flex-1 bg-brand-light text-white font-bold py-4 rounded-xl shadow-lg transition-all translate" data-en="Save Item" data-ar="حفظ المادة" data-ckb="خەزنکردنی کاڵا">Save Item</button>
+                    <button type="button" id="cancelItem" onclick="resetItemForm()" class="hidden px-8 bg-gray-100 text-gray-500 font-bold rounded-xl transition-all translate" data-en="Cancel" data-ar="إلغاء" data-ckb="پاشگەزبوونەوە">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="category-content" class="hidden fade-in">
+            <h2 id="catFormTitle" class="text-xl font-bold mb-6 text-gray-700 translate" data-en="Add New Category" data-ar="إضافة قسم جديد" data-ckb="زیادکردنی بەشی نوێ">Add New Category</h2>
+            <form id="addCategoryForm" class="space-y-5">
+                <input type="hidden" id="editCatId">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase translate" data-en="Identifier (e.g. food)" data-ar="المعرف (مثل food)" data-ckb="کۆدی بەش (وەک food)">Identifier</label>
+                    <input type="text" id="catValue" required class="w-full p-4 rounded-xl bg-purple-50 border-none outline-none focus:ring-2 ring-brand-light font-medium">
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <input type="text" id="catEn" required placeholder="Label (English)" class="w-full p-4 rounded-xl bg-purple-50 border-none focus:ring-2 ring-brand-light">
+                    <input type="text" id="catAr" required placeholder="العنوان (عربي)" dir="rtl" class="w-full p-4 rounded-xl bg-purple-50 border-none focus:ring-2 ring-brand-light">
+                    <input type="text" id="catCkb" required placeholder="ناونیشان (کوردی)" dir="rtl" class="w-full p-4 rounded-xl bg-purple-50 border-none focus:ring-2 ring-brand-light">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="submitCatBtn" class="flex-1 bg-brand-light text-white font-bold py-4 rounded-xl shadow-lg transition-all translate" data-en="Save Category" data-ar="حفظ القسم" data-ckb="خەزنکردنی بەش">Save Category</button>
+                    <button type="button" id="cancelCat" onclick="resetCatForm()" class="hidden px-8 bg-gray-100 text-gray-500 font-bold rounded-xl translate" data-en="Cancel" data-ar="إلغاء" data-ckb="پاشگەزبوونەوە">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="manage-items-content" class="hidden fade-in space-y-3"></div>
+        <div id="manage-cats-content" class="hidden fade-in space-y-3"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://rqhyjmrseescvptbiqwb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_iymSU7qwXzYXEyu0UY03aw_1wykVYvN';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentLang = 'en';
+
+        // --- AUTH ---
+        document.getElementById('dbLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const { error } = await _supabase.auth.signInWithPassword({ 
+                email: document.getElementById('email').value, 
+                password: document.getElementById('password').value 
+            });
+            if (error) {
+                document.getElementById('loginError').innerText = error.message;
+                document.getElementById('loginError').classList.remove('hidden');
+            } else {
+                checkUserStatus();
+            }
+        });
+
+        async function checkUserStatus() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-admin-content').style.display = 'block';
+                setLanguage(currentLang);
+                loadCategories();
+            }
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            location.reload();
+        }
+
+        // --- TRANSLATION CORE ---
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.dir = (lang === 'ar' || lang === 'ckb') ? 'rtl' : 'ltr';
+            
+            // 1. گۆڕینی دەقەکان
+            document.querySelectorAll('.translate').forEach(el => {
+                if(el.dataset[lang]) el.innerText = el.dataset[lang];
+            });
+
+            // 2. گۆڕینی Placeholder ئینپوتەکان
+            const placeholders = {
+                en: { nameEn: "Name (English)", nameAr: "Name (Arabic)", nameCkb: "Name (Kurdish)", catEn: "Label (English)", catAr: "Label (Arabic)", catCkb: "Label (Kurdish)" },
+                ar: { nameEn: "الاسم (إنكليزي)", nameAr: "الاسم (عربي)", nameCkb: "الاسم (كردي)", catEn: "العنوان (إنكليزي)", catAr: "العنوان (عربي)", catCkb: "العنوان (كردي)" },
+                ckb: { nameEn: "ناو (ئینگلیزی)", nameAr: "ناو (عەرەبی)", nameCkb: "ناو (کوردی)", catEn: "ناونیشان (ئینگلیزی)", catAr: "ناونیشان (ئەرەبی)", catCkb: "ناونیشان (کوردی)" }
+            };
+            
+            Object.keys(placeholders[lang]).forEach(id => {
+                const input = document.getElementById(id);
+                if(input) input.placeholder = placeholders[lang][id];
+            });
+
+            // 3. ڕەنگی دوگمەکان
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-light', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+            document.getElementById(`btn-${lang}`).classList.add('bg-brand-light', 'text-white');
+            document.getElementById(`btn-${lang}`).classList.remove('text-gray-400');
+            
+            if(document.getElementById('main-admin-content').style.display === 'block') {
+                loadCategories(); // Refresh list to update currency labels if needed
+            }
+        }
+
+        function switchTab(tab) {
+            ['item', 'category', 'manage-items', 'manage-cats'].forEach(t => {
+                document.getElementById(`${t}-content`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "pb-3 font-bold text-gray-400 whitespace-nowrap text-sm";
+            });
+            document.getElementById(`${tab}-content`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "pb-3 font-bold text-brand-light border-b-2 border-brand-light whitespace-nowrap text-sm";
+            if(tab === 'manage-items') loadItems();
+            if(tab === 'manage-cats') loadCategories();
+        }
+
+        // --- DATA FUNCTIONS ---
+        async function loadCategories() {
+            const { data } = await _supabase.from('categories').select('*').order('id');
+            const select = document.getElementById('category');
+            const list = document.getElementById('manage-cats-content');
+            if(select) select.innerHTML = (data || []).map(c => `<option value="${c.value}">${c[`name_${currentLang}`] || c.name_en}</option>`).join('');
+            if(list) list.innerHTML = (data || []).map(c => `
+                <div class="flex items-center justify-between p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                    <span class="font-bold text-gray-800">${c[`name_${currentLang}`] || c.name_en}</span>
+                    <div class="flex gap-4">
+                        <button onclick='prepEditCat(${JSON.stringify(c)})' class="text-blue-500 font-bold">Edit</button>
+                        <button onclick="deleteCat(${c.id})" class="text-red-500 font-bold">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadItems() {
+            const { data } = await _supabase.from('menu_items').select('*').order('id', { ascending: false });
+            const list = document.getElementById('manage-items-content');
+            list.innerHTML = (data || []).map(i => `
+                <div class="flex items-center gap-4 p-3 bg-purple-50 rounded-2xl border border-purple-100">
+                    <img src="${i.image_url}" class="w-12 h-12 rounded-xl object-cover shadow-sm bg-white">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-800 text-sm">${i[`name_${currentLang}`] || i.name_en}</div>
+                        <div class="text-brand-light font-black text-xs">${Number(i.price).toLocaleString()} IQD</div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick='prepEditItem(${JSON.stringify(i)})' class="text-blue-500 font-bold text-xs">Edit</button>
+                        <button onclick="deleteItem(${i.id})" class="text-red-500 font-bold text-xs">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- CRUD LOGIC ---
+        document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editItemId').value;
+            const file = document.getElementById('imageFile').files[0];
+            let imgUrl = null;
+            if(file) {
+                const path = `items/${Date.now()}_${file.name}`;
+                const { data } = await _supabase.storage.from('menu-images').upload(path, file);
+                if(data) imgUrl = _supabase.storage.from('menu-images').getPublicUrl(path).data.publicUrl;
+            }
+            const d = {
+                category: document.getElementById('category').value,
+                price: parseFloat(document.getElementById('price').value),
+                name_en: document.getElementById('nameEn').value,
+                name_ar: document.getElementById('nameAr').value,
+                name_ckb: document.getElementById('nameCkb').value
+            };
+            if(imgUrl) d.image_url = imgUrl;
+            const { error } = id ? await _supabase.from('menu_items').update(d).eq('id', id) : await _supabase.from('menu_items').insert([d]);
+            if(!error) { alert("Done! ✅"); resetItemForm(); loadItems(); }
+        });
+
+        async function deleteItem(id) { if(confirm("Delete?")) { await _supabase.from('menu_items').delete().eq('id', id); loadItems(); } }
+        
+        function prepEditItem(i) {
+            switchTab('item');
+            document.getElementById('editItemId').value = i.id;
+            document.getElementById('category').value = i.category;
+            document.getElementById('price').value = i.price;
+            document.getElementById('nameEn').value = i.name_en;
+            document.getElementById('nameAr').value = i.name_ar;
+            document.getElementById('nameCkb').value = i.name_ckb;
+            document.getElementById('itemFormTitle').innerText = "Update Item";
+            document.getElementById('cancelItem').classList.remove('hidden');
+        }
+
+        function resetItemForm() {
+            document.getElementById('addItemForm').reset();
+            document.getElementById('editItemId').value = "";
+            document.getElementById('cancelItem').classList.add('hidden');
+        }
+
+        document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editCatId').value;
+            const d = {
+                value: document.getElementById('catValue').value,
+                name_en: document.getElementById('catEn').value,
+                name_ar: document.getElementById('catAr').value,
+                name_ckb: document.getElementById('catCkb').value
+            };
+            const { error } = id ? await _supabase.from('categories').update(d).eq('id', id) : await _supabase.from('categories').insert([d]);
+            if(!error) { alert("Done! ✅"); resetCatForm(); loadCategories(); }
+        });
+
+        async function deleteCat(id) { if(confirm("Delete?")) { await _supabase.from('categories').delete().eq('id', id); loadCategories(); } }
+
+        function prepEditCat(c) {
+            switchTab('category');
+            document.getElementById('editCatId').value = c.id;
+            document.getElementById('catValue').value = c.value;
+            document.getElementById('catEn').value = c.name_en;
+            document.getElementById('catAr').value = c.name_ar;
+            document.getElementById('catCkb').value = c.name_ckb;
+            document.getElementById('cancelCat').classList.remove('hidden');
+        }
+
+        function resetCatForm() {
+            document.getElementById('addCategoryForm').reset();
+            document.getElementById('editCatId').value = "";
+            document.getElementById('cancelCat').classList.add('hidden');
+        }
+
+        window.onload = checkUserStatus;
+    </script>
+</body>
+</html>

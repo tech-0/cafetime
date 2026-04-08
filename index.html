@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ckb" class="light" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cafe Time | Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png"/>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Outfit', 'sans-serif'], 
+                        rtl_font: ['Noto Kufi Arabic', 'sans-serif'] 
+                    },
+                    colors: { 
+                        brand: { light: '#7C3AED', dark: '#A78BFA' }, 
+                        bg: { light: '#FAF5FF', dark: '#0f0a1a' }, 
+                        card: { light: '#FFFFFF', dark: '#1a132b' } 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [dir="rtl"], [dir="rtl"] * { font-family: 'Noto Kufi Arabic', sans-serif !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .cart-bounce { animation: cartBounce 0.3s ease-in-out; }
+        @keyframes cartBounce { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .toast-enter { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .toast-leave { animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
+        
+        /* شاردنەوەی سکڕۆڵ باڕ بۆ فلتەرەکان لە مۆبایل */
+        #filter-container { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-gray-800 dark:text-gray-200 font-sans transition-colors duration-500 overflow-x-hidden min-h-screen flex flex-col">
+
+    <nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0f0a1a]/80 backdrop-blur-lg border-b border-purple-100 dark:border-purple-900/50 py-3 px-4 flex justify-between items-center transition-colors duration-500">
+        <div class="text-xl md:text-2xl font-extrabold text-brand-light dark:text-brand-dark translate" data-en="Cafe Time" data-ar="Cafe Time" data-ckb="Cafe Time">Cafe Time</div>
+        
+        <div class="flex items-center gap-2 md:gap-3">
+            <div class="flex gap-1 bg-purple-50 dark:bg-purple-900/30 p-1 rounded-full border border-purple-100 dark:border-purple-800/50 scale-90 md:scale-100">
+                <button onclick="setLanguage('en')" id="btn-en" class="lang-btn px-2.5 py-1 text-[10px] font-bold rounded-full transition-all">EN</button>
+                <button onclick="setLanguage('ar')" id="btn-ar" class="lang-btn px-2.5 py-1 text-[10px] font-bold rounded-full transition-all">AR</button>
+                <button onclick="setLanguage('ckb')" id="btn-ckb" class="lang-btn px-2.5 py-1 text-[10px] font-bold rounded-full transition-all">KU</button>
+            </div>
+            <button onclick="toggleTheme()" class="p-2 rounded-full bg-purple-50 dark:bg-purple-900/30 text-brand-light dark:text-brand-dark border border-purple-100 dark:border-purple-800/50 hover:scale-105 transition-transform">
+                <svg id="theme-icon" class="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <header class="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4 text-center min-h-[40vh] md:min-h-[60vh] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGdePER2tULLkynzz-MKDoiunVqBQh_eae9Q&s" class="w-full h-full object-cover">
+            <div class="absolute inset-0 backdrop-blur-[2px] bg-white/40 dark:bg-black/60 transition-colors duration-500"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-bg-light/40 dark:via-bg-dark/60 to-bg-light dark:to-bg-dark"></div>
+        </div>
+        <div class="relative z-10 max-w-4xl mx-auto px-4">
+            <h1 class="text-4xl md:text-7xl font-extrabold text-gray-900 dark:text-white mb-4 drop-shadow-md translate" data-en="Cafe Time" data-ar="Cafe Time" data-ckb="Cafe Time">Cafe Time</h1>
+            <p class="text-gray-900 dark:text-purple-50 text-base md:text-2xl font-bold drop-shadow-md translate bg-white/20 dark:bg-black/30 backdrop-blur-md py-1.5 px-5 rounded-full border border-white/30 inline-block" data-en="Get comfortable here" data-ar="اشعر بالراحة" data-ckb="ئاسوودەیت لێرە بەدەست بهێنە">Get comfortable here</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pb-20 relative z-10 -mt-8 flex-grow w-full">
+        <div id="filter-container" class="mb-8 md:mb-12 flex overflow-x-auto gap-2 pb-4 justify-start md:justify-center no-scrollbar -mx-4 px-4 md:mx-0"></div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6" id="menu-container">
+            <div class="col-span-full text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-light mb-4"></div>
+                <p class="text-gray-500 font-bold translate" data-en="Loading menu..." data-ar="جاري التحميل..." data-ckb="چاوەروانی بابەتەکان بکە...">Loading menu...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white/50 dark:bg-black/20 backdrop-blur-sm border-t border-purple-100 dark:border-purple-900/30 py-4 px-4 text-center">
+        <p class="text-[11px] md:text-sm text-gray-500 dark:text-gray-400">
+            <span class="translate" data-en="Created by" data-ar="تم التطوير بواسطة" data-ckb="گەشەپێدراوە لەلایەن">Created by</span> 
+            <a href="https://ibrahimqadir.com/" target="_blank" class="text-brand-light dark:text-brand-dark font-bold hover:underline">Ibrahim Qadir</a>
+        </p>
+    </footer>
+
+    <div id="cartModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-md p-4 transition-opacity">
+        <div class="bg-card-light dark:bg-[#161024] w-full max-w-lg rounded-2xl p-5 md:p-8 shadow-2xl border border-purple-100 dark:border-purple-700/50 max-h-[90vh] overflow-y-auto no-scrollbar relative">
+            <button onclick="closeCartModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <h2 class="text-xl md:text-2xl font-extrabold text-brand-light dark:text-brand-dark mb-5 flex items-center gap-2 italic">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                <span class="translate" data-en="Your Cart" data-ar="سلة المشتريات" data-ckb="بابەتە هەلبژێردراوەکانت">Your Cart</span>
+            </h2>
+            <div id="cartItemsContainer" class="space-y-3 mb-6 border-b border-gray-100 dark:border-purple-800/40 pb-6 min-h-[50px]"></div>
+            <div class="flex justify-between items-center mb-6 text-lg font-bold text-gray-900 dark:text-white">
+                <span class="translate" data-en="Total:" data-ar="المجموع:" data-ckb="کۆی گشتی:">Total:</span>
+                <span id="cartTotalPrice" class="text-brand-light dark:text-brand-dark">0 IQD</span>
+            </div>
+            <form id="orderForm" class="space-y-3">
+                <input type="text" id="userName" required placeholder="Name" class="w-full px-4 py-3 rounded-xl bg-purple-50 dark:bg-[#1f1736] text-gray-900 dark:text-white border border-purple-100 dark:border-purple-700/50 outline-none text-sm">
+                <input type="number" id="tableNum" required placeholder="Table Number" class="w-full px-4 py-3 rounded-xl bg-purple-50 dark:bg-[#1f1736] text-gray-900 dark:text-white border border-purple-100 dark:border-purple-700/50 outline-none text-sm">
+                <button type="submit" id="submitBtn" class="w-full py-3.5 bg-brand-light text-white font-bold rounded-xl shadow-lg active:scale-95 transition-transform">
+                    <span id="submitBtnText" class="translate" data-en="Send Order" data-ar="إرسال الطلب" data-ckb="ناردنی داواکاری">Send Order</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <button id="floatingCartBtn" onclick="openCartModal()" class="fixed bottom-6 right-6 bg-brand-light text-white p-4 rounded-full shadow-xl z-40 hidden items-center justify-center hover:scale-110 active:scale-90 transition-transform">
+        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-bg-dark">0</span>
+    </button>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-2xl z-[200] hidden items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toastText">Order Sent Successfully!</span>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://rqhyjmrseescvptbiqwb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_iymSU7qwXzYXEyu0UY03aw_1wykVYvN';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const BOT_TOKEN = '8497581928:AAENtb-gT-6TCZHm50aQgOBoHtoGkA_Wqjs';
+        const CHAT_ID = '794295449';
+
+        let currentLang = 'en';
+        let cart = [];
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+
+        async function loadCategoriesFromDB() {
+            const container = document.getElementById('filter-container');
+            try {
+                const { data: categories, error } = await _supabase.from('categories').select('*').order('id', { ascending: true });
+                if (error) throw error;
+                let html = `<button onclick="filterItems('all', this)" class="filter-btn active whitespace-nowrap px-6 py-2.5 rounded-full font-bold bg-brand-light text-white shadow-md text-sm translate" data-filter="all" data-en="All Menu" data-ar="القائمة كاملة" data-ckb="هەموو مینیۆ">All Menu</button>`;
+                categories.forEach(cat => {
+                    html += `<button onclick="filterItems('${cat.value}', this)" class="filter-btn whitespace-nowrap px-6 py-2.5 rounded-full font-bold bg-card-light dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-purple-100 dark:border-purple-800/40 text-sm translate" data-filter="${cat.value}" data-en="${cat.name_en}" data-ar="${cat.name_ar}" data-ckb="${cat.name_ckb}">${cat.name_en}</button>`;
+                });
+                container.innerHTML = html;
+                setLanguage(currentLang);
+            } catch (err) { console.error(err); }
+        }
+
+        function filterItems(category, btn) {
+            const items = document.querySelectorAll('.menu-item');
+            const btns = document.querySelectorAll('.filter-btn');
+            
+            // چاککردنی ڕەنگی دوگمەکان
+            btns.forEach(b => {
+                b.classList.remove('bg-brand-light', 'text-white', 'shadow-md', 'active');
+                b.classList.add('bg-card-light', 'dark:bg-card-dark', 'text-gray-500', 'dark:text-gray-400');
+            });
+            btn.classList.add('bg-brand-light', 'text-white', 'shadow-md', 'active');
+            btn.classList.remove('bg-card-light', 'dark:bg-card-dark', 'text-gray-500', 'dark:text-gray-400');
+
+            items.forEach(item => {
+                item.style.display = (category === 'all' || item.dataset.category === category) ? 'block' : 'none';
+            });
+        }
+
+        async function loadMenuFromDB() {
+            const container = document.getElementById('menu-container');
+            try {
+                const { data: items, error } = await _supabase.from('menu_items').select('*').order('category', { ascending: false });
+                if (error) throw error;
+                container.innerHTML = ''; 
+                items.forEach(item => {
+                    container.innerHTML += `
+                        <article class="menu-item fade-in bg-card-light dark:bg-[#161024] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-purple-50/50 dark:border-purple-900/20" data-category="${item.category}">
+                            <img src="${item.image_url}" class="h-40 md:h-48 w-full object-cover">
+                            <div class="p-4 md:p-6">
+                                <div class="mb-4">
+                                    <h3 class="item-title text-base md:text-lg font-bold text-gray-900 dark:text-white translate" data-en="${item.name_en}" data-ar="${item.name_ar}" data-ckb="${item.name_ckb}">${item.name_en}</h3>
+                                    <span class="text-brand-light dark:text-brand-dark font-black text-sm md:text-base">${Number(item.price).toLocaleString()} IQD</span>
+                                </div>
+                                <button onclick="addToCart(this, ${item.price})" class="w-full border-2 border-brand-light text-brand-light font-bold py-2 rounded-xl active:bg-brand-light active:text-white transition-all text-xs md:text-sm translate" data-en="Add to Cart" data-ar="أضف إلى السلة" data-ckb="زیادکردن بۆ سەبەتە">Add to Cart</button>
+                            </div>
+                        </article>`;
+                });
+                setLanguage(currentLang);
+            } catch (err) { console.error(err); }
+        }
+
+        function addToCart(btn, price) {
+            const card = btn.closest('.menu-item');
+            const itemName = card.querySelector('.item-title').innerText;
+            const existing = cart.find(i => i.name === itemName);
+            if (existing) existing.quantity += 1;
+            else cart.push({ name: itemName, price: price, quantity: 1 });
+            updateCartBadge();
+            const original = btn.innerText;
+            btn.innerText = currentLang === 'ckb' ? 'زیادکرا ✓' : (currentLang === 'ar' ? 'تم ✓' : 'Added ✓');
+            setTimeout(() => { btn.innerText = original; }, 800);
+        }
+
+        function updateCartBadge() {
+            const btn = document.getElementById('floatingCartBtn');
+            const total = cart.reduce((sum, i) => sum + i.quantity, 0);
+            if (total > 0) { btn.classList.remove('hidden'); btn.classList.add('flex'); document.getElementById('cartBadge').innerText = total; }
+            else btn.classList.add('hidden');
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cartItemsContainer');
+            container.innerHTML = ''; 
+            let total = 0;
+            cart.forEach((item, index) => {
+                total += item.price * item.quantity;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-purple-50/50 dark:bg-[#1f1736] p-3 rounded-xl border border-purple-100/50 dark:border-purple-800/30">
+                        <div class="flex-1"><h4 class="font-bold text-gray-900 dark:text-white text-sm">${item.name}</h4><span class="text-brand-light font-bold text-xs">${item.price.toLocaleString()} IQD</span></div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="changeQty(${index}, -1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">-</button>
+                            <span class="dark:text-white font-bold text-sm min-w-[20px] text-center">${item.quantity}</span>
+                            <button onclick="changeQty(${index}, 1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">+</button>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('cartTotalPrice').innerText = `${total.toLocaleString()} IQD`;
+        }
+
+        function changeQty(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) cart.splice(index, 1);
+            updateCartBadge();
+            renderCartItems();
+        }
+
+        function openCartModal() { renderCartItems(); document.getElementById('cartModal').classList.add('modal-active'); }
+        function closeCartModal() { document.getElementById('cartModal').classList.remove('modal-active'); }
+
+        document.getElementById('orderForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(cart.length === 0) return;
+            const name = document.getElementById('userName').value;
+            const table = document.getElementById('tableNum').value;
+            const itemsText = cart.map(i => `• ${i.name} (${i.quantity}x)`).join('\n');
+            const total = document.getElementById('cartTotalPrice').innerText;
+            const fullText = `🚀 *New Order*\n👤 Name: ${name}\n🔢 Table: ${table}\n🛒 Items:\n${itemsText}\n💰 Total: ${total}`;
+            
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CHAT_ID, photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGdePER2tULLkynzz-MKDoiunVqBQh_eae9Q&s', caption: fullText, parse_mode: 'Markdown' })
+            });
+            cart = []; updateCartBadge(); closeCartModal(); 
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden'); toast.classList.add('flex', 'toast-enter');
+            setTimeout(() => { toast.classList.replace('toast-enter', 'toast-leave'); setTimeout(()=>toast.classList.add('hidden'), 400); }, 3000);
+        });
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.dir = (lang === 'ar' || lang === 'ckb') ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-light', 'text-white');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+            });
+            const activeBtn = document.getElementById(`btn-${lang}`);
+            if(activeBtn) { activeBtn.classList.add('bg-brand-light', 'text-white'); activeBtn.classList.remove('text-gray-500'); }
+
+            if (lang === 'ar' || lang === 'ckb') document.body.classList.replace('font-sans', 'font-rtl_font');
+            else document.body.classList.replace('font-rtl_font', 'font-sans');
+            
+            document.querySelectorAll('.translate').forEach(el => { if(el.dataset[lang]) el.innerText = el.dataset[lang]; });
+        }
+
+        window.onload = async () => { setLanguage('en'); await loadCategoriesFromDB(); await loadMenuFromDB(); };
+    </script>
+</body>
+</html>
