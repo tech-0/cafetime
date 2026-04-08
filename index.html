@@ -32,14 +32,10 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .cart-bounce { animation: cartBounce 0.3s ease-in-out; }
-        @keyframes cartBounce { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .toast-enter { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .toast-leave { animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
-        
-        /* شاردنەوەی سکڕۆڵ باڕ بۆ فلتەرەکان لە مۆبایل */
         #filter-container { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
@@ -170,7 +166,7 @@
             });
         }
 
-       async function loadMenuFromDB() {
+        async function loadMenuFromDB() {
             const container = document.getElementById('menu-container');
             try {
                 const { data: items, error } = await _supabase.from('menu_items').select('*').order('category', { ascending: false });
@@ -224,9 +220,9 @@
                     <div class="flex justify-between items-center bg-purple-50/50 dark:bg-[#1f1736] p-3 rounded-xl border border-purple-100/50 dark:border-purple-800/30">
                         <div class="flex-1"><h4 class="font-bold text-gray-900 dark:text-white text-sm">${item.name}</h4><span class="text-brand-light font-bold text-xs">${item.price.toLocaleString()} IQD</span></div>
                         <div class="flex items-center gap-3">
-                            <button onclick="changeQty(${index}, -1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">-</button>
+                            <button type="button" onclick="changeQty(${index}, -1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">-</button>
                             <span class="dark:text-white font-bold text-sm min-w-[20px] text-center">${item.quantity}</span>
-                            <button onclick="changeQty(${index}, 1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">+</button>
+                            <button type="button" onclick="changeQty(${index}, 1)" class="w-8 h-8 rounded-lg bg-white dark:bg-black/20 text-brand-light font-black shadow-sm">+</button>
                         </div>
                     </div>`;
             });
@@ -243,24 +239,92 @@
         function openCartModal() { renderCartItems(); document.getElementById('cartModal').classList.add('modal-active'); }
         function closeCartModal() { document.getElementById('cartModal').classList.remove('modal-active'); }
 
+        // --- ناردنی داواکاری بۆ تێلیگرام بەو شێوازەی داوات کردووە ---
         document.getElementById('orderForm').addEventListener('submit', (e) => {
             e.preventDefault();
             if(cart.length === 0) return;
+            
             const name = document.getElementById('userName').value;
             const table = document.getElementById('tableNum').value;
-            const itemsText = cart.map(i => `• ${i.name} (${i.quantity}x)`).join('\n');
-            const total = document.getElementById('cartTotalPrice').innerText;
-            const fullText = `🚀 *New Order*\n👤 Name: ${name}\n🔢 Table: ${table}\n🛒 Items:\n${itemsText}\n💰 Total: ${total}`;
+            
+            // وەرگرتنی کات و ڕێکەوت
+            const now = new Date();
+            const date = now.toLocaleDateString('en-GB'); // شێوازی DD/MM/YYYY
+            const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); // شێوازی HH:MM
+
+            let itemsString = '';
+            let totalPrice = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.quantity * item.price;
+                totalPrice += itemTotal;
+                itemsString += `➖ ${item.quantity}x ${item.name} (${itemTotal.toLocaleString()} IQD)\n`;
+            });
+
+            const formattedTotal = `${totalPrice.toLocaleString()} IQD`;
+            let fullText = '';
+
+            // ڕێکخستنی نامەکە بەپێی زمانی هەڵبژێردراو
+            if (currentLang === 'ckb') {
+                fullText = `🚀 *داواکارییەکی نوێ!*
+-----------------------------
+🛒 *کاڵاکان:*
+${itemsString}
+💰 *کۆی گشتی:* ${formattedTotal}
+-----------------------------
+👤 *کڕیار:* ${name}
+🔢 *ژمارەی مێز:* ${table}
+-----------------------------
+📅 *ڕێکەوت:* ${date}
+⏰ *کات:* ${time}`;
+            } else if (currentLang === 'ar') {
+                fullText = `🚀 *طلب جديد!*
+-----------------------------
+🛒 *الطلبات:*
+${itemsString}
+💰 *المجموع:* ${formattedTotal}
+-----------------------------
+👤 *الزبون:* ${name}
+🔢 *رقم الطاولة:* ${table}
+-----------------------------
+📅 *التاريخ:* ${date}
+⏰ *الوقت:* ${time}`;
+            } else {
+                fullText = `🚀 *New Order Received!*
+-----------------------------
+🛒 *Items:*
+${itemsString}
+💰 *Total:* ${formattedTotal}
+-----------------------------
+👤 *Customer:* ${name}
+🔢 *Table No:* ${table}
+-----------------------------
+📅 *Date:* ${date}
+⏰ *Time:* ${time}`;
+            }
             
             fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: CHAT_ID, photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGdePER2tULLkynzz-MKDoiunVqBQh_eae9Q&s', caption: fullText, parse_mode: 'Markdown' })
+                body: JSON.stringify({ 
+                    chat_id: CHAT_ID, 
+                    photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGdePER2tULLkynzz-MKDoiunVqBQh_eae9Q&s', 
+                    caption: fullText, 
+                    parse_mode: 'Markdown' 
+                })
             });
-            cart = []; updateCartBadge(); closeCartModal(); 
+            
+            cart = []; 
+            updateCartBadge(); 
+            closeCartModal(); 
+            
             const toast = document.getElementById('toast');
-            toast.classList.remove('hidden'); toast.classList.add('flex', 'toast-enter');
-            setTimeout(() => { toast.classList.replace('toast-enter', 'toast-leave'); setTimeout(()=>toast.classList.add('hidden'), 400); }, 3000);
+            toast.classList.remove('hidden'); 
+            toast.classList.add('flex', 'toast-enter');
+            setTimeout(() => { 
+                toast.classList.replace('toast-enter', 'toast-leave'); 
+                setTimeout(()=>toast.classList.add('hidden'), 400); 
+            }, 3000);
         });
 
         function setLanguage(lang) {
@@ -272,7 +336,7 @@
                 btn.classList.add('text-gray-500', 'dark:text-gray-400');
             });
             const activeBtn = document.getElementById(`btn-${lang}`);
-            if(activeBtn) { activeBtn.classList.add('bg-brand-light', 'text-white'); activeBtn.classList.remove('text-gray-500'); }
+            if(activeBtn) { activeBtn.classList.add('bg-brand-light', 'text-white'); activeBtn.classList.remove('text-gray-500', 'dark:text-gray-400'); }
 
             if (lang === 'ar' || lang === 'ckb') document.body.classList.replace('font-sans', 'font-rtl_font');
             else document.body.classList.replace('font-rtl_font', 'font-sans');
