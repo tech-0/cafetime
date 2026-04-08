@@ -29,7 +29,7 @@
 </head>
 <body class="bg-bg-light text-gray-800 font-sans p-2 md:p-8 transition-all duration-500 overflow-x-hidden">
 
-    <div id="login-overlay" class="fixed inset-0 z-[300] flex items-center justify-center bg-bg-light p-4">
+    <div id="login-overlay" class="fixed inset-0 z-[300] flex items-center justify-center bg-bg-light p-4 text-left">
         <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-purple-100 p-6 md:p-10 fade-in">
             <div class="text-center mb-8">
                 <h2 class="text-2xl font-black text-gray-800 translate" data-en="Secure Login" data-ar="تسجيل الدخول" data-ckb="چوونەژوورەوە">Secure Login</h2>
@@ -38,11 +38,16 @@
             <form id="dbLoginForm" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1 translate" data-en="Email Address" data-ar="البريد الإلكتروني" data-ckb="ئیمەیڵ">Email Address</label>
-                    <input type="email" id="email" required class="w-full p-4 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
+                    <input type="email" id="email" required placeholder="admin@example.com" class="w-full p-4 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1 translate" data-en="Password" data-ar="كلمة المرور" data-ckb="وشەی نهێنی">Password</label>
-                    <input type="password" id="password" required class="w-full p-4 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
+                    <div class="relative">
+                        <input type="password" id="password" required placeholder="••••••••" class="w-full p-4 pr-12 rounded-xl bg-purple-50 border border-transparent outline-none focus:border-brand-light transition-all">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-light transition-colors">
+                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" id="loginBtn" class="w-full py-4 bg-brand-light text-white font-bold rounded-xl shadow-xl hover:bg-brand-dark transition-all translate" data-en="Sign In" data-ar="تسجيل الدخول" data-ckb="بچۆ ژوورەوە">Sign In</button>
                 <p id="loginError" class="text-red-500 text-xs text-center hidden font-bold mt-2"></p>
@@ -52,13 +57,13 @@
 
     <div id="main-admin-content" class="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-xl border border-purple-100 p-4 md:p-10 mb-10">
         
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 text-left">
             <h1 class="text-2xl md:text-3xl font-black text-brand-light translate" data-en="Cafe Time Admin" data-ar="لوحة التحكم" data-ckb="بەڕێوەبردنی کافێ">Cafe Time Admin</h1>
             <div class="flex items-center gap-3">
                 <div class="flex gap-1 bg-purple-50 p-1 rounded-full border border-purple-100">
                     <button onclick="setLanguage('en')" id="btn-en" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">EN</button>
                     <button onclick="setLanguage('ar')" id="btn-ar" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">AR</button>
-                    <button onclick="setLanguage('ckb')" id="btn-ckb" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">KU</button>
+                    <button onclick="setLanguage('ckb')" id="btn-ckb" class="lang-btn px-4 py-1.5 text-xs font-bold rounded-full transition-all">CKB</button>
                 </div>
                 <button onclick="handleLogout()" class="p-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -73,7 +78,7 @@
             <button id="tab-manage-cats" onclick="switchTab('manage-cats')" class="pb-3 font-bold text-gray-400 whitespace-nowrap text-sm translate" data-en="Cats List" data-ar="قائمة الأقسام" data-ckb="لیستی بەشەکان">Cats List</button>
         </div>
 
-        <div id="item-content" class="fade-in">
+        <div id="item-content" class="fade-in text-left">
             <h2 id="itemFormTitle" class="text-xl font-bold mb-6 text-gray-700 translate" data-en="Add New Menu Item" data-ar="إضافة مادة جديدة" data-ckb="زیادکردنی کاڵای نوێ">Add New Menu Item</h2>
             <form id="addItemForm" class="space-y-5">
                 <input type="hidden" id="editItemId">
@@ -103,7 +108,7 @@
             </form>
         </div>
 
-        <div id="category-content" class="hidden fade-in">
+        <div id="category-content" class="hidden fade-in text-left">
             <h2 id="catFormTitle" class="text-xl font-bold mb-6 text-gray-700 translate" data-en="Add New Category" data-ar="إضافة قسم جديد" data-ckb="زیادکردنی بەشی نوێ">Add New Category</h2>
             <form id="addCategoryForm" class="space-y-5">
                 <input type="hidden" id="editCatId">
@@ -134,17 +139,37 @@
 
         let currentLang = 'en';
 
+        // --- PASSWORD VISIBILITY TOGGLE ---
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>`;
+            } else {
+                passInput.type = 'password';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>`;
+            }
+        }
+
         // --- AUTH ---
         document.getElementById('dbLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('loginError');
+            btn.disabled = true;
+            btn.innerText = "...";
+
             const { error } = await _supabase.auth.signInWithPassword({ 
                 email: document.getElementById('email').value, 
                 password: document.getElementById('password').value 
             });
+
             if (error) {
-                document.getElementById('loginError').innerText = error.message;
-                document.getElementById('loginError').classList.remove('hidden');
+                errorEl.innerText = error.message;
+                errorEl.classList.remove('hidden');
+                btn.innerText = "Sign In";
+                btn.disabled = false;
             } else {
                 checkUserStatus();
             }
@@ -165,21 +190,18 @@
             location.reload();
         }
 
-        // --- TRANSLATION CORE ---
         function setLanguage(lang) {
             currentLang = lang;
             document.documentElement.dir = (lang === 'ar' || lang === 'ckb') ? 'rtl' : 'ltr';
             
-            // 1. گۆڕینی دەقەکان
             document.querySelectorAll('.translate').forEach(el => {
                 if(el.dataset[lang]) el.innerText = el.dataset[lang];
             });
 
-            // 2. گۆڕینی Placeholder ئینپوتەکان
             const placeholders = {
-                en: { nameEn: "Name (English)", nameAr: "Name (Arabic)", nameCkb: "Name (Kurdish)", catEn: "Label (English)", catAr: "Label (Arabic)", catCkb: "Label (Kurdish)" },
-                ar: { nameEn: "الاسم (إنكليزي)", nameAr: "الاسم (عربي)", nameCkb: "الاسم (كردي)", catEn: "العنوان (إنكليزي)", catAr: "العنوان (عربي)", catCkb: "العنوان (كردي)" },
-                ckb: { nameEn: "ناو (ئینگلیزی)", nameAr: "ناو (عەرەبی)", nameCkb: "ناو (کوردی)", catEn: "ناونیشان (ئینگلیزی)", catAr: "ناونیشان (ئەرەبی)", catCkb: "ناونیشان (کوردی)" }
+                en: { nameEn: "Name (English)", nameAr: "Name (Arabic)", nameCkb: "Name (Kurdish)", catEn: "Label (English)", catAr: "Label (Arabic)", catCkb: "Label (Kurdish)", email: "admin@example.com", password: "••••••••" },
+                ar: { nameEn: "الاسم (إنكليزي)", nameAr: "الاسم (عربي)", nameCkb: "الاسم (كردي)", catEn: "العنوان (إنكليزي)", catAr: "العنوان (عربي)", catCkb: "العنوان (كردي)", email: "البريد الإلكتروني", password: "••••••••" },
+                ckb: { nameEn: "ناو (ئینگلیزی)", nameAr: "ناو (عەرەبی)", nameCkb: "ناو (کوردی)", catEn: "ناونیشان (ئینگلیزی)", catAr: "ناونیشان (ئەرەبی)", catCkb: "ناونیشان (کوردی)", email: "ئیمەیڵ", password: "••••••••" }
             };
             
             Object.keys(placeholders[lang]).forEach(id => {
@@ -187,17 +209,12 @@
                 if(input) input.placeholder = placeholders[lang][id];
             });
 
-            // 3. ڕەنگی دوگمەکان
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('bg-brand-light', 'text-white');
                 btn.classList.add('text-gray-400');
             });
             document.getElementById(`btn-${lang}`).classList.add('bg-brand-light', 'text-white');
             document.getElementById(`btn-${lang}`).classList.remove('text-gray-400');
-            
-            if(document.getElementById('main-admin-content').style.display === 'block') {
-                loadCategories(); // Refresh list to update currency labels if needed
-            }
         }
 
         function switchTab(tab) {
@@ -211,7 +228,6 @@
             if(tab === 'manage-cats') loadCategories();
         }
 
-        // --- DATA FUNCTIONS ---
         async function loadCategories() {
             const { data } = await _supabase.from('categories').select('*').order('id');
             const select = document.getElementById('category');
@@ -219,10 +235,10 @@
             if(select) select.innerHTML = (data || []).map(c => `<option value="${c.value}">${c[`name_${currentLang}`] || c.name_en}</option>`).join('');
             if(list) list.innerHTML = (data || []).map(c => `
                 <div class="flex items-center justify-between p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                    <span class="font-bold text-gray-800">${c[`name_${currentLang}`] || c.name_en}</span>
+                    <span class="font-bold text-gray-800 text-sm">${c[`name_${currentLang}`] || c.name_en}</span>
                     <div class="flex gap-4">
-                        <button onclick='prepEditCat(${JSON.stringify(c)})' class="text-blue-500 font-bold">Edit</button>
-                        <button onclick="deleteCat(${c.id})" class="text-red-500 font-bold">Delete</button>
+                        <button onclick='prepEditCat(${JSON.stringify(c)})' class="text-blue-500 font-bold text-xs uppercase">Edit</button>
+                        <button onclick="deleteCat(${c.id})" class="text-red-500 font-bold text-xs uppercase">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -239,14 +255,13 @@
                         <div class="text-brand-light font-black text-xs">${Number(i.price).toLocaleString()} IQD</div>
                     </div>
                     <div class="flex gap-3">
-                        <button onclick='prepEditItem(${JSON.stringify(i)})' class="text-blue-500 font-bold text-xs">Edit</button>
-                        <button onclick="deleteItem(${i.id})" class="text-red-500 font-bold text-xs">Delete</button>
+                        <button onclick='prepEditItem(${JSON.stringify(i)})' class="text-blue-500 font-bold text-xs uppercase">Edit</button>
+                        <button onclick="deleteItem(${i.id})" class="text-red-500 font-bold text-xs uppercase">Delete</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // --- CRUD LOGIC ---
         document.getElementById('addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('editItemId').value;
