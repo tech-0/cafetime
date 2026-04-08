@@ -158,7 +158,6 @@
             const items = document.querySelectorAll('.menu-item');
             const btns = document.querySelectorAll('.filter-btn');
             
-            // چاککردنی ڕەنگی دوگمەکان
             btns.forEach(b => {
                 b.classList.remove('bg-brand-light', 'text-white', 'shadow-md', 'active');
                 b.classList.add('bg-card-light', 'dark:bg-card-dark', 'text-gray-500', 'dark:text-gray-400');
@@ -180,7 +179,7 @@
                 items.forEach(item => {
                     container.innerHTML += `
                         <article class="menu-item fade-in bg-card-light dark:bg-[#161024] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-purple-50/50 dark:border-purple-900/20" data-category="${item.category}">
-                            <img src="${item.image_url}" class="h-40 md:h-48 w-full object-cover">
+                            <img src="${item.image_url}" class="w-full h-48 object-cover">
                             <div class="p-4 md:p-6">
                                 <div class="mb-4">
                                     <h3 class="item-title text-base md:text-lg font-bold text-gray-900 dark:text-white translate" data-en="${item.name_en}" data-ar="${item.name_ar}" data-ckb="${item.name_ckb}">${item.name_en}</h3>
